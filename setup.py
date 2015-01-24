@@ -1,11 +1,21 @@
+from __future__ import print_function
+
 import codecs
 import os
 import sys
+import json
 
 from distutils.util import convert_path
 from fnmatch import fnmatchcase
 from setuptools import setup, find_packages
 
+try:
+    from urllib import urlencode, urlopen
+    bytes_type = str
+except ImportError:
+    from urllib.parse import urlencode
+    from urllib.request import urlopen
+    bytes_type = bytes
 
 def read(fname):
     return codecs.open(os.path.join(os.path.dirname(__file__), fname)).read()
@@ -70,9 +80,8 @@ def find_package_data(
                         or fn.lower() == pattern.lower()):
                         bad_name = True
                         if show_ignored:
-                            print >> sys.stderr, (
-                                "Directory %s ignored by pattern %s"
-                                % (fn, pattern))
+                            print("Directory %s ignored by pattern %s"
+                                  % (fn, pattern), file=sys.stderr)
                         break
                 if bad_name:
                     continue
@@ -93,9 +102,8 @@ def find_package_data(
                         or fn.lower() == pattern.lower()):
                         bad_name = True
                         if show_ignored:
-                            print >> sys.stderr, (
-                                "File %s ignored by pattern %s"
-                                % (fn, pattern))
+                            print("File %s ignored by pattern %s"
+                                  % (fn, pattern), file=sys.stderr)
                         break
                 if bad_name:
                     continue
@@ -114,27 +122,26 @@ def getPkgPath():
     return __import__(PACKAGE).__path__[0] + '/'
 
 def minify(files, outfile, ftype):
-    import urllib, json
 
     content = u''
     for filename in files:
         with open(getPkgPath() + filename) as f:
             for line in f.xreadlines():
-                if isinstance(line, str):
+                if isinstance(line, bytes_type):
                     line = line.decode('utf-8')
                 content = content + line
 
-    data = urllib.urlencode([
+    data = urlencode([
         ('code', content.encode('utf-8')),
         ('type', ftype),
       ])
 
-    f = urllib.urlopen('http://api.applegrew.com/minify', data)
+    f = urlopen('http://api.applegrew.com/minify', data)
     data = u''
     while 1:
         line = f.readline()
         if line:
-            if isinstance(line, str):
+            if isinstance(line, bytes_type):
                 line = line.decode('utf-8')
             data = data + line
         else:
@@ -144,15 +151,16 @@ def minify(files, outfile, ftype):
     data = json.loads(data)
     for key in data:
         value = data[key]
-        if isinstance(value, str):
+        if isinstance(value, bytes_type):
             value = value.decode('utf-8')
 
     if data['success']:
-        with open(getPkgPath() + outfile, 'w') as f:
-            f.write(data['compiled_code'].encode('utf8'))
+        with open(getPkgPath() + outfile, 'w', encoding="utf-8") as f:
+#            f.write(data['compiled_code'].encode('utf8'))
+            f.write(data['compiled_code'])
     else:
-        print data['error_code']
-        print data['error']
+        print(data['error_code'])
+        print(data['error'])
         raise Exception('Could not minify.')
 
 if len(sys.argv) > 1 and 'sdist' == sys.argv[1]:
@@ -167,7 +175,8 @@ setup(
     name=NAME,
     version=VERSION,
     description=DESCRIPTION,
-    long_description=read("README.md"),
+    long_description=read("README.md").decode('utf-8'),
+#    long_description=read("README.md"),
     author=AUTHOR,
     author_email=AUTHOR_EMAIL,
     license="LICENSE.txt",
@@ -186,7 +195,7 @@ setup(
         "Framework :: Django",
     ],
     install_requires=[
-        "Django>=1.3",
+        "Django>=1.5",
     ],
     zip_safe=False,
 )
