@@ -700,7 +700,7 @@ class HeavyModelSelect2TagField(HeavySelect2FieldBaseMixin, ModelMultipleChoiceF
         try:
             key = self.to_field_name or 'pk'
             value = self.queryset.get(**{key: value})
-        except ValueError, e:
+        except ValueError as e:
             raise ValidationError(self.error_messages['invalid_choice'])
         except self.queryset.model.DoesNotExist:
             value = self.create_new_value(value)

@@ -72,7 +72,7 @@ def is_valid_id(val):
         return True
 
 if ENABLE_MULTI_PROCESS_SUPPORT:
-    from memcache_wrapped_db_client import Client
+    from .memcache_wrapped_db_client import Client
     remote_server = Client(MEMCACHE_HOST, str(MEMCACHE_PORT), MEMCACHE_TTL)
 
 @synchronized
@@ -92,7 +92,7 @@ def register_field(key, field):
     """
     global __id_store, __field_store
 
-    from fields import AutoViewFieldMixin
+    from .fields import AutoViewFieldMixin
     if not isinstance(field, AutoViewFieldMixin):
         raise ValueError('Field must extend AutoViewFieldMixin')
 
