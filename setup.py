@@ -198,4 +198,5 @@ setup(
         "Django>=1.5",
     ],
     zip_safe=False,
+    use_2to3=True,
 )
